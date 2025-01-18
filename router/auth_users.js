@@ -7,7 +7,7 @@ let users = [];
 
 const isValid = (username)=>{ //returns boolean
 //write code to check is the username is valid
-    return username && username.lenght > 0;
+    return username && username.length > 0;
 }
 
 const authenticatedUser = (username,password)=>{ //returns boolean
@@ -19,13 +19,13 @@ const authenticatedUser = (username,password)=>{ //returns boolean
 //only registered users can login
 regd_users.post("/login", (req,res) => {
   //Write your code here
-  const {user} = req.body;
-  if(!user){
-    return res.status(404).json({message: "Body Empty"})
+  const {username, password} = req.body;
+  if(!username || !password){
+    return res.status(400).json({message: "Username and Password are required"})
   }
-  let accessToken =jwt.sign({data:user}, "acess",{expiresIn: 60*60});
+  let accessToken =jwt.sign({data:username}, "access",{expiresIn: 60*60});
   req.session.authorization = {accessToken}
-  return res.status(300).json({message: "Yet to be implemented"});
+  return res.status(300).json({message: "Login Succesfully"});
 });
 
 // Add a book review
@@ -34,6 +34,8 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const {isbn} = req.params;
   const {review} = req.body;
 
+
+  if (!users.reviews) users.reviews = {};
   if (!users.reviews[isbn]) {
     users.reviews[isbn] = [];
   }
@@ -48,10 +50,22 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
     const {isbn} = req.params;
     const {review} = req.body;
 
-    if (!users.reviews[isbn]) {
-        users.reviews[isbn] = [];
+
+    if (!users.reviews) {
+        users.reviews = {}; 
     }
-    users.reviews[isbn.slice(review)]
+
+    if (!users.reviews[isbn]) {
+        return res.status(404).json({ message: "No reviews found for this ISBN" });
+    }
+    
+    const reviewIndex = users.reviews[isbn].indexOf(review);
+    if (reviewIndex === -1) {
+        return res.status(404).json({ message: "Review not found" });
+    }
+
+    users.reviews[isbn].splice(reviewIndex, 1);
+
 
 
 });
